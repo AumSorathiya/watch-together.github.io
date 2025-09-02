@@ -1,0 +1,188 @@
+Build a complete static web app (no custom backend) that lets people watch a video together and live chat from a single GitHub Pages URL. Use vanilla HTML/CSS/JS only, with a clean, modern UI and responsive design. Use Firebase Realtime Database as the serverless backend for signaling/sync and chat (client-side only). Provide all files needed to drop into a GitHub repo and publish with GitHub Pages.
+
+Features
+
+Landing + Room System
+
+Landing page with “Create Room” and “Join Room”.
+
+Room IDs are short and URL-shareable: https://<my-gh-pages-site>/room.html?r=ROOM_ID.
+
+Prompt for a display name on first entry (store in localStorage).
+
+Video Player (sync)
+
+Support YouTube URL, Vimeo URL, or direct MP4 URL.
+
+In the room, the host can paste/change the video URL; everyone’s player loads it.
+
+Sync play/pause/seek across all users with minimal drift:
+
+Only the “controller” (host) emits control events.
+
+Late joiners auto-seek to current time.
+
+Debounce seeks and reconcile drift every ~5s (if difference > 400ms).
+
+Show current viewers count and tiny avatars (initials circle).
+
+Live Chat
+
+Right-side panel (or bottom on mobile).
+
+Messages show name, time, and support emoji + links.
+
+Typing indicator (“X is typing…”).
+
+Basic moderation: host can clear chat.
+
+Persist last 100 messages per room in Firebase.
+
+Presence
+
+Show online users list with join/leave toasts.
+
+Mark host badge.
+
+Permissions & Host Transfer
+
+The room creator is host.
+
+If host leaves, auto-promote the oldest present user.
+
+UI/UX
+
+Minimal, elegant layout (single-page feel):
+
+Header: room ID, copy-link button, viewers count.
+
+Main: video area (16:9) on left; chat panel to the right (stack on mobile).
+
+Footer controls: Play/Pause, Seek (slider), Mute, Volume, Video URL input (host only), “Sync Now” button.
+
+Keyboard: Space (play/pause), Arrow keys (seek ±5s), “S” for sync.
+
+Light/dark mode toggle (remember preference).
+
+Tech Constraints
+
+Static only: Must run from GitHub Pages (no Node server).
+
+Backend = Firebase Realtime Database using client SDK only.
+
+Put Firebase config in /js/firebase-config.sample.js and read from /js/firebase-config.js (gitignored in example, but provide a sample).
+
+For YouTube/Vimeo, use their iframe API for controlled playback. For MP4, use <video> element with custom controls and events.
+
+Use module-pattern or ES modules; no bundlers; keep code clean and commented.
+
+Security/Abuse
+
+Validate video URLs (only YouTube/Vimeo/MP4 mime). Strip query junk.
+
+Escape chat messages (basic XSS protection).
+
+Rate-limit chat (e.g., 1 msg / 800ms per user).
+
+Files & Structure
+
+/index.html           // Landing (create/join)
+/room.html            // Room UI
+/css/styles.css
+/js/app.js            // shared utils (URL, storage, toasts)
+/js/room.js           // room logic: video sync, chat, presence
+/js/chat.js           // chat UI + Firebase write/read
+/js/video.js          // player abstraction: YouTube/Vimeo/MP4
+/js/presence.js       // presence, viewers count, host logic
+/js/firebase-config.sample.js // placeholders
+/assets/logo.svg
+/README.md            // setup + deploy steps
+
+
+Keep functions small, well-named, and documented.
+
+README.md must include
+
+How to create a Firebase project, enable Realtime Database, set rules:
+
+{
+  "rules": {
+    ".read": "auth == null",
+    ".write": "auth == null"
+  }
+}
+
+
+(Explain that for real use they should lock rules with room tokens, but keep open for quick demo.)
+
+How to copy firebase-config.sample.js to firebase-config.js and paste their Firebase config.
+
+How to publish with GitHub Pages (from main branch /root).
+
+How to form room links and share.
+
+Notes on YouTube/Vimeo API usage, and CORS considerations for MP4.
+
+Implementation details
+
+Video Abstraction (video.js):
+
+initPlayer(type, url, {onReady, onPlay, onPause, onSeek})
+
+load(url)
+
+play(), pause(), seek(seconds), getTime(), isPlaying()
+
+Implement 3 drivers: YouTube Iframe API, Vimeo Player API, HTML5 <video>.
+
+Detect type from URL (regex).
+
+Sync strategy:
+
+Firebase paths:
+
+/rooms/{id}/state: { url, time, playing, updatedAt, hostId }
+
+/rooms/{id}/chat/{msgId}: { user, text, ts }
+
+/rooms/{id}/presence/{userId}: { name, joinedAt, lastSeen }
+
+Host writes state on controls; clients subscribe and apply with guard to avoid feedback loops.
+
+Drift correction: every 5s clients compare abs(localTime - state.time) and if > 0.4s, perform soft seek.
+
+Presence:
+
+Use onDisconnect() to remove presence.
+
+Host transfer: if current host missing for >5s, promote earliest joinedAt.
+
+Chat (chat.js):
+
+Input with Enter to send; Shift+Enter = newline.
+
+Simple emoji picker (native <dialog> with a few common emoji).
+
+Linkify http(s):// safely with rel="noopener noreferrer" and target="_blank".
+
+UI polish:
+
+Copy room link button uses Clipboard API with feedback toast.
+
+Nice micro-interactions: button hover, chat bubble slide-in, unread badge when video is focused.
+
+Mobile: chat collapses to a drawer.
+
+Testing hooks
+
+Add ?debug=1 to show a small debug panel with local/remote times, drift, role (host/client).
+
+Add a “Load Demo Video” button that sets a public MP4 URL for quick testing.
+
+Deliverables
+
+Provide the full code for all files.
+
+Make sure the default app loads without errors if firebase-config.js is missing—show a friendly setup screen that links to README.
+
+Keep CSS modern (CSS variables, prefers-color-scheme).
