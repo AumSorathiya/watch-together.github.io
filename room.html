@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncWatch Room</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+    
+    <!-- YouTube API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <!-- Vimeo API -->
+    <script src="https://player.vimeo.com/api/player.js"></script>
+</head>
+<body class="room-body">
+    <div class="room-container">
+        <!-- Header -->
+        <header class="room-header">
+            <div class="room-info">
+                <h1 class="room-title">Room: <span id="room-id-display"></span></h1>
+                <button id="copy-link-btn" class="btn btn-outline" title="Copy room link">
+                    📋 Copy Link
+                </button>
+            </div>
+            <div class="header-actions">
+                <div class="viewers-count">
+                    <span id="viewers-count">0</span> viewers
+                </div>
+                <div id="user-avatars" class="user-avatars"></div>
+                <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="room-main">
+            <!-- Video Section -->
+            <div class="video-section">
+                <div class="video-container">
+                    <div id="video-player" class="video-player">
+                        <div class="no-video-placeholder">
+                            <span class="placeholder-icon">📺</span>
+                            <p>No video loaded</p>
+                            <button id="demo-video-btn" class="btn btn-secondary">Load Demo Video</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Video Controls -->
+                <div class="video-controls">
+                    <div class="control-row">
+                        <button id="play-pause-btn" class="control-btn" disabled>
+                            <span class="control-icon">▶️</span>
+                        </button>
+                        <div class="seek-container">
+                            <input 
+                                type="range" 
+                                id="seek-slider" 
+                                min="0" 
+                                max="100" 
+                                value="0" 
+                                disabled
+                                class="seek-slider"
+                            >
+                            <div class="time-display">
+                                <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+                            </div>
+                        </div>
+                        <button id="mute-btn" class="control-btn" disabled>
+                            <span class="control-icon">🔊</span>
+                        </button>
+                        <input 
+                            type="range" 
+                            id="volume-slider" 
+                            min="0" 
+                            max="100" 
+                            value="50" 
+                            disabled
+                            class="volume-slider"
+                        >
+                        <button id="sync-btn" class="control-btn">
+                            <span class="control-icon">🔄</span> Sync
+                        </button>
+                    </div>
+                    
+                    <!-- Host Controls -->
+                    <div id="host-controls" class="host-controls hidden">
+                        <div class="url-input-container">
+                            <input 
+                                type="url" 
+                                id="video-url-input" 
+                                placeholder="Paste YouTube, Vimeo, or MP4 URL here..."
+                                class="video-url-input"
+                            >
+                            <button id="load-video-btn" class="btn btn-primary">Load Video</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Section -->
+            <div class="chat-section">
+                <div class="chat-header">
+                    <h3>Chat</h3>
+                    <div class="chat-actions">
+                        <button id="emoji-btn" class="chat-action-btn" title="Emoji">😀</button>
+                        <button id="clear-chat-btn" class="chat-action-btn host-only hidden" title="Clear chat">🗑️</button>
+                        <button id="toggle-chat-btn" class="chat-action-btn mobile-only" title="Toggle chat">💬</button>
+                    </div>
+                </div>
+                
+                <div id="chat-messages" class="chat-messages"></div>
+                
+                <div id="typing-indicator" class="typing-indicator hidden">
+                    <span></span> is typing...
+                </div>
+                
+                <div class="chat-input-container">
+                    <textarea 
+                        id="chat-input" 
+                        placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+                        maxlength="500"
+                        rows="1"
+                    ></textarea>
+                    <button id="send-message-btn" class="btn btn-primary" disabled>Send</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Mobile Chat Overlay -->
+        <div id="mobile-chat-overlay" class="mobile-chat-overlay hidden">
+            <div class="mobile-chat-content">
+                <div class="mobile-chat-header">
+                    <h3>Chat</h3>
+                    <button id="close-mobile-chat" class="btn btn-outline">×</button>
+                </div>
+                <div id="mobile-chat-messages" class="chat-messages"></div>
+                <div class="chat-input-container">
+                    <textarea 
+                        id="mobile-chat-input" 
+                        placeholder="Type a message..."
+                        maxlength="500"
+                        rows="1"
+                    ></textarea>
+                    <button id="mobile-send-btn" class="btn btn-primary">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emoji Picker -->
+    <dialog id="emoji-picker" class="emoji-picker">
+        <div class="emoji-header">
+            <h4>Pick an Emoji</h4>
+            <button id="close-emoji-picker" class="btn btn-outline">×</button>
+        </div>
+        <div class="emoji-grid">
+            <button class="emoji-btn">😀</button>
+            <button class="emoji-btn">😂</button>
+            <button class="emoji-btn">😊</button>
+            <button class="emoji-btn">😍</button>
+            <button class="emoji-btn">🤔</button>
+            <button class="emoji-btn">😎</button>
+            <button class="emoji-btn">😢</button>
+            <button class="emoji-btn">😡</button>
+            <button class="emoji-btn">👍</button>
+            <button class="emoji-btn">👎</button>
+            <button class="emoji-btn">❤️</button>
+            <button class="emoji-btn">🔥</button>
+            <button class="emoji-btn">⚡</button>
+            <button class="emoji-btn">🎉</button>
+            <button class="emoji-btn">🎵</button>
+            <button class="emoji-btn">🍿</button>
+        </div>
+    </dialog>
+
+    <!-- Debug Panel -->
+    <div id="debug-panel" class="debug-panel hidden">
+        <h4>Debug Info</h4>
+        <div class="debug-info">
+            <div>Role: <span id="debug-role">-</span></div>
+            <div>Local Time: <span id="debug-local-time">-</span></div>
+            <div>Remote Time: <span id="debug-remote-time">-</span></div>
+            <div>Drift: <span id="debug-drift">-</span></div>
+            <div>Status: <span id="debug-status">-</span></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="setup-screen hidden">
+        <div class="setup-content">
+            <h2>🔧 Setup Required</h2>
+            <p>Firebase configuration is missing. Please follow the setup instructions in the README.</p>
+            <a href="README.md" class="btn btn-primary">View Setup Instructions</a>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/room.js"></script>
+</body>
+</html>
